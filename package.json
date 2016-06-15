@@ -1,0 +1,9 @@
+{
+  "name": "typescript-rtti-generator",
+  "version": "0.1.0",
+  "description": "",
+  "main": "src/rtti-generator.js",
+  "dependencies": {
+    "typescript": "^1.8.10"
+  }
+}

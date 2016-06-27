@@ -28,7 +28,8 @@ function InterfaceProcessor() {
 				case ts.SyntaxKind.Identifier: // 69
 					if (scope == ts.SyntaxKind.PropertySignature) {
 						if (node.parent.kind === ts.SyntaxKind.TypeReference) {
-							fieldBuilder.setType(node.text);
+							fieldBuilder.setType('object');
+							fieldBuilder.setObjectType(node.text);
 							reflectBuilder.addField(fieldBuilder.build());
 						} else {
 							fieldBuilder.setName(node.text);

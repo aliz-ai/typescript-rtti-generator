@@ -89,7 +89,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; numberItems: number[]; bool : boolean[]; }';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
 				public static get numberItems(){ return {name: "numberItems", type: "number", array: true};}
 				public static get bool(){ return {name: "bool", type: "boolean", array: true};}
 			}`;
@@ -100,10 +100,10 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export interface Bello{ listItems: ExampleListItem[];}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
 			}
 			export class BelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});
@@ -112,7 +112,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; equals(param0: any): Promise<boolean>;}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
 			}`
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});
@@ -121,7 +121,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export var rootUrl: string;';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});
@@ -130,7 +130,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export enum Enum{}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});

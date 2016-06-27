@@ -10,11 +10,11 @@ function FieldBuilder() {
 		var properties = [];
 		properties.push('name: "' + descriptor.name + '"');
 		properties.push('type: "' + descriptor.type + '"');
+		if (descriptor.objectType) {
+			properties.push('objectType: ' + descriptor.objectType + 'Reflect');
+		}
 		if (descriptor.array) {
 			properties.push('array: ' + descriptor.array);
-		}
-		if (descriptor.objectType) {
-			properties.push('objectType: "' + descriptor.objectType + '"');
 		}
 		var result = 'public static get ' + descriptor.name + '(){ return {' + properties.join(', ') + '};}';
 		return result;

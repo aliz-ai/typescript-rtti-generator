@@ -65,13 +65,13 @@ describe('ast', () => {
 	it('can handle the empty interface', () => {
 		const emptyInterface = 'export interface Empty{}';
 		const expected = "export class EmptyReflect{\n\t\n}";
-		expect(astObj.process(emptyInterface)).toBe(expected);
+		expectEqualIgnoreWhitespace(astObj.process(emptyInterface, 'test-module'), expected);
 	});
 
 	it('can handle the empty interface inside module', () => {
-		const emptyInterface = 'export module HelloWorld { export interface Empty{}}';
-		const expected = "export class EmptyReflect{\n\t\n}";
-		expect(astObj.process(emptyInterface)).toBe(expected);
+		const emptyInterface = 'export module TestModule { export interface Empty{}}';
+		const expected = "import {TestModule} from './test-module'; export class EmptyReflect{\n\t\n}";
+		expectEqualIgnoreWhitespace(astObj.process(emptyInterface, 'test-module'), expected);
 	});
 
 	it('can handle an interface with standard types', () => {
@@ -82,56 +82,68 @@ describe('ast', () => {
 				public static get string(){ return {name: "string", type: "string"};}
 				public static get bool(){ return {name: "bool", type: "boolean"};}
 			}`;
-		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
+		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
 
 	it('can handle an interface with array types', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; numberItems: number[]; bool : boolean[]; }';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 				public static get numberItems(){ return {name: "numberItems", type: "number", array: true};}
 				public static get bool(){ return {name: "bool", type: "boolean", array: true};}
 			}`;
-		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
+		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
 
 	it('can handle two interfaces with array types', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export interface Bello{ listItems: ExampleListItem[];}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}
 			export class BelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}`;
-		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
+		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
 
 	it('can handle an unsopported service interface', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; equals(param0: any): Promise<boolean>;}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}`
-		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
+		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
 
-	it('can handle an interface after variable', () => {
+	it('can handle an interface before variable', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export var rootUrl: string;';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}`;
-		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
+		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
 
-	it('can handle an interface after enum', () => {
+	it('can handle an interface before  enum', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export enum Enum{}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", objectType: ExampleListItemReflect, array: true};}
+				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}`;
-		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
+		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
+
+	it('handles enum references', () => {
+		const inputInterface = 'export module TestModule { export enum Enum{}; export interface Hello{ listItems: Enum;} }';
+		const expected =
+			`import {TestModule} from './test-module';
+			 import Enum = TestModule.Enum;
+			 export class HelloReflect{
+				public static get listItems(){ return {name: "listItems", type: "object", constructor: Enum};}
+			}`;
+		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
+	});
+
 });

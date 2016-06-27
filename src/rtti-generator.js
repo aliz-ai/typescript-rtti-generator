@@ -2,88 +2,120 @@ var ts = require('typescript');
 const ReflectBuilder = require('./reflect-builder');
 const FieldBuilder = require('./field-builder');
 
-function InterfaceProcessor() {
-	var fieldBuilderObj;
-	var scope;
-	this.process = function (node) {
-		var reflectBuilder = new ReflectBuilder();
-		var fieldBuilder = new FieldBuilder();
-		processNode(node);
-		return reflectBuilder.build();
-		function getTypeAsString(type) {
-			switch (type) {
-				case ts.SyntaxKind.BooleanKeyword: // 120
-					return 'boolean';
-				case ts.SyntaxKind.NumberKeyword: // 128
-					return 'number';
-				case ts.SyntaxKind.StringKeyword: // 130
-					return 'string';
-				default:
-					break;
-			}
-		}
-
-		function processNode(node) {
-			switch (node.kind) {
-				case ts.SyntaxKind.Identifier: // 69
-					if (scope == ts.SyntaxKind.PropertySignature) {
-						if (node.parent.kind === ts.SyntaxKind.TypeReference) {
-							fieldBuilder.setType('object');
-							fieldBuilder.setObjectType(node.text);
-							reflectBuilder.addField(fieldBuilder.build());
-						} else {
-							fieldBuilder.setName(node.text);
-						}
-					} else if (node.parent.kind == ts.SyntaxKind.InterfaceDeclaration) {
-						reflectBuilder.setTypeName(node.text);
-					}
-					break;
-				case ts.SyntaxKind.BooleanKeyword: // 120
-				case ts.SyntaxKind.NumberKeyword: // 128
-				case ts.SyntaxKind.StringKeyword: // 130
-					if (scope == ts.SyntaxKind.PropertySignature) {
-						fieldBuilder.setType(getTypeAsString(node.kind));
-						reflectBuilder.addField(fieldBuilder.build());
-					}
-					break;
-				case ts.SyntaxKind.PropertySignature: //141
-					scope = ts.SyntaxKind.PropertySignature;
-					fieldBuilder = new FieldBuilder();
-					break;
-				case ts.SyntaxKind.ArrayType:  // 157
-					fieldBuilder.setArray();
-					break;
-			}
-			if (node.kind != ts.SyntaxKind.MethodSignature) {
-				ts.forEachChild(node, processNode);
-			}
-		}
-	}
-}
-
-function getActualScopeAsString() {
-	switch (scope) {
-		case ts.SyntaxKind.ModuleDeclaration:
-			return "module";
-		case ts.SyntaxKind.InterfaceDeclaration:
-			return "interface";
-		case ts.SyntaxKind.PropertySignature:
-			return "property";
-		default:
-			break;
-	}
-}
-
 function RttiGenerator() {
 	var rv = '';
 	var log = false;
 
+	var moduleName = '';
+	var declarations = [];
+
 	var fieldBuilder = new FieldBuilder();
 
-	this.process = function (inputString) {
+	function InterfaceProcessor() {
+		var fieldBuilderObj;
+		var scope;
+		this.process = function (node) {
+			var reflectBuilder = new ReflectBuilder();
+			var fieldBuilder = new FieldBuilder();
+			processNode(node);
+			return reflectBuilder.build();
+			function getTypeAsString(type) {
+				switch (type) {
+					case ts.SyntaxKind.BooleanKeyword: // 120
+						return 'boolean';
+					case ts.SyntaxKind.NumberKeyword: // 128
+						return 'number';
+					case ts.SyntaxKind.StringKeyword: // 130
+						return 'string';
+					default:
+						break;
+				}
+			}
+
+			function processNode(node) {
+				switch (node.kind) {
+					case ts.SyntaxKind.Identifier: // 69
+						if (scope == ts.SyntaxKind.PropertySignature) {  // 141
+							if (node.parent.kind === ts.SyntaxKind.TypeReference) { // 152
+								var name = node.text;
+								fieldBuilder.setType('object');
+								if (!declarations[name] || declarations[name].kind == ts.SyntaxKind.InterfaceDeclaration) { // if there was no declaration found, we expect it to actually exist
+									fieldBuilder.setReflect(node.text);
+								} else if (declarations[name].kind == ts.SyntaxKind.EnumDeclaration) {
+									// there's no reflect generated for enums, but we import it from the reflected module
+									fieldBuilder.setEnum();
+									fieldBuilder.setConstructor(name);
+								}
+								reflectBuilder.addField(fieldBuilder.build());
+							} else {
+								fieldBuilder.setName(node.text);
+							}
+						} else if (node.parent.kind == ts.SyntaxKind.InterfaceDeclaration) {
+							reflectBuilder.setTypeName(node.text);
+						}
+						break;
+					case ts.SyntaxKind.BooleanKeyword: // 120
+					case ts.SyntaxKind.NumberKeyword: // 128
+					case ts.SyntaxKind.StringKeyword: // 130
+						if (scope == ts.SyntaxKind.PropertySignature) {
+							fieldBuilder.setType(getTypeAsString(node.kind));
+							reflectBuilder.addField(fieldBuilder.build());
+						}
+						break;
+					case ts.SyntaxKind.PropertySignature: //141
+						scope = ts.SyntaxKind.PropertySignature;
+						fieldBuilder = new FieldBuilder();
+						break;
+					case ts.SyntaxKind.ArrayType:  // 157
+						fieldBuilder.setArray();
+						break;
+				}
+				if (node.kind != ts.SyntaxKind.MethodSignature) {
+					ts.forEachChild(node, processNode);
+				}
+			}
+		}
+	}
+
+	function getActualScopeAsString() {
+		switch (scope) {
+			case ts.SyntaxKind.ModuleDeclaration:
+				return "module";
+			case ts.SyntaxKind.InterfaceDeclaration:
+				return "interface";
+			case ts.SyntaxKind.PropertySignature:
+				return "property";
+			default:
+				break;
+		}
+	}
+
+	this.process = function (inputString, fileName) {
 		var sourceFile = ts.createSourceFile('', inputString, ts.ScriptTarget.ES6, true);
+		preEnumerateTypes(sourceFile)
+
+		// import enums
+		if (moduleName) {
+			rv += 'import {' + moduleName + '} from \'./' + fileName + '\';\r\n';
+			for (var name in declarations) {
+				if (declarations[name].kind == ts.SyntaxKind.EnumDeclaration) {
+					rv += 'import ' + name + ' = ' + moduleName + '.' + name + ';\r\n';
+				}
+			}
+		}
+
 		processNode(sourceFile);
 		return rv;
+	}
+
+	function preEnumerateTypes(node) {
+		if (node.kind == ts.SyntaxKind.InterfaceDeclaration || node.kind == ts.SyntaxKind.EnumDeclaration) {
+			declarations[node.name.text] = { kind: node.kind };
+		}
+		if (node.kind == ts.SyntaxKind.ModuleDeclaration) {
+			moduleName = node.name.text;
+		}
+		ts.forEachChild(node, preEnumerateTypes);
 	}
 
 	function processNode(node) {

@@ -1,35 +1,42 @@
 function FieldBuilder() {
-	var _name = '';
-	var _type = '';
-	var _tomb = false;
+	var descriptor = {
+		name: '',
+		type: '', // 'number', 'string', 'object'
+		objectType: '', // the name of the object, in case of 'object'
+		array: false
+	}
 
-	this.build = function() {
-		if (_name == '' || _type == '')
-			return '';
-		var rv = 'public static get ' + _name + '(){ return {name: "' +
-			_name + '", type: ';
-
-		if (_tomb) {
-			rv += '"' + _type+'[]' + '"';
-		} else {
-			rv += '"' + _type + '"';
+	this.build = function () {
+		var properties = [];
+		properties.push('name: "' + descriptor.name + '"');
+		properties.push('type: "' + descriptor.type + '"');
+		if (descriptor.array) {
+			properties.push('array: ' + descriptor.array);
 		}
-		rv += '};}';
-		return rv;
+		if (descriptor.objectType) {
+			properties.push('objectType: "' + descriptor.objectType + '"');
+		}
+		var result = 'public static get ' + descriptor.name + '(){ return {' + properties.join(', ') + '};}';
+		return result;
 	}
 
-	this.setName = function(name) {
-		_name = name;
+	this.setName = function (name) {
+		descriptor.name = name;
 		return this;
 	}
 
-	this.setType = function(type) {
-		_type = type;
+	this.setType = function (type) {
+		descriptor.type = type;
 		return this;
 	}
 
-	this.setArray = function() {
-		_tomb = true;
+	this.setObjectType = function (objectType) {
+		descriptor.objectType = objectType;
+		return this;
+	}
+
+	this.setArray = function () {
+		descriptor.array = true;
 		return this;
 	}
 }

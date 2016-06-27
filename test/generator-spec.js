@@ -1,7 +1,7 @@
 var ts = require('typescript');
-const ReflectBuilder = require('./reflect-builder');
-const FieldBuilder = require('./field-builder');
-const RttiGenerator = require('./rtti-generator');
+const ReflectBuilder = require('../src//reflect-builder');
+const FieldBuilder = require('../src/field-builder');
+const RttiGenerator = require('../src/rtti-generator');
 
 function squeezeWhitespaces(string) {
 	return string.replace(/\s+/g, ' ');
@@ -14,29 +14,15 @@ describe("The FieldDefinitionBuilder ", function () {
 	var builder;
 	beforeEach(function () {
 		builder = new FieldBuilder();
-  });
-
-	it("create empty field builder", function () {
-		expect(builder.build()).toEqual('');
-  });
+	});
 
 	it("create field builder with name and type", function () {
 		const expected = 'public static get id(){ return {name: "id", type: "string"};}';
 		expect(builder.setName('id').setType('string').build()).toEqual(expected);
   });
 
-	it("create field builder with name only", function () {
-		const expected = '';
-		expect(builder.setName('id').build()).toEqual(expected);
-  });
-
-	it("create field builder with type only", function () {
-		const expected = '';
-		expect(builder.setType('string').build()).toEqual(expected);
-  });
-
 	it("create field builder with name and type and array", function () {
-		const expected = 'public static get id(){ return {name: "id", type: "string[]"};}';
+		const expected = 'public static get id(){ return {name: "id", type: "string", array: true};}';
 		expect(builder.setName('id').setType('string').setArray().build()).toEqual(expected);
   });
 
@@ -48,14 +34,6 @@ describe("The ReflectBuilder ", function () {
 		builder = new ReflectBuilder();
   });
 
-	it("create empty reflect builder", function () {
-		expect(builder.build()).toEqual('');
-  });
-
-	it("create a reflect builder with empty name", function () {
-		expect(builder.addfield('fieldOne').build()).toEqual('');
-  });
-
 	it("create a reflect builder with empty field set", function () {
 		const expected = "export class idReflect{\n\t\n}";
 		expect(builder.setTypeName('id').build()).toEqual(expected);
@@ -63,12 +41,12 @@ describe("The ReflectBuilder ", function () {
 
 	it("create a reflect builder with one field", function () {
 		const expected = "export class idReflect{\n\tfield1\n}";
-		expect(builder.setTypeName('id').addfield('field1').build()).toEqual(expected);
+		expect(builder.setTypeName('id').addField('field1').build()).toEqual(expected);
   });
 
 		it("create a reflect builder with three fields", function () {
 		const expected = "export class idReflect{\n\tfield1\n\tfield2\n\tfield3\n}";
-		expect(builder.setTypeName('id').addfield('field1').addfield('field2').addfield('field3').build()).toEqual(expected);
+		expect(builder.setTypeName('id').addField('field1').addField('field2').addField('field3').build()).toEqual(expected);
   });
 });
 
@@ -111,21 +89,21 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; numberItems: number[]; bool : boolean[]; }';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem[]"};}
-				public static get numberItems(){ return {name: "numberItems", type: "number[]"};}
-				public static get bool(){ return {name: "bool", type: "boolean[]"};}
+				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
+				public static get numberItems(){ return {name: "numberItems", type: "number", array: true};}
+				public static get bool(){ return {name: "bool", type: "boolean", array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});
 
-	it('can handle two interface with array types', () => {
+	it('can handle two interfaces with array types', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export interface Bello{ listItems: ExampleListItem[];}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem[]"};}
+				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
 			}
 			export class BelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem[]"};}
+				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});
@@ -134,7 +112,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; equals(param0: any): Promise<boolean>;}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem[]"};}
+				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
 			}`
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});
@@ -143,7 +121,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export var rootUrl: string;';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem[]"};}
+				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});
@@ -152,7 +130,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export enum Enum{}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "ExampleListItem[]"};}
+				public static get listItems(){ return {name: "listItems", type: "ExampleListItem", array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface), expected);
 	});

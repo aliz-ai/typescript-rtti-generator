@@ -29,7 +29,7 @@ function InterfaceProcessor() {
 					if (scope == ts.SyntaxKind.PropertySignature) {
 						if (node.parent.kind === ts.SyntaxKind.TypeReference) {
 							fieldBuilder.setType(node.text);
-							reflectBuilder.addfield(fieldBuilder.build());
+							reflectBuilder.addField(fieldBuilder.build());
 						} else {
 							fieldBuilder.setName(node.text);
 						}
@@ -42,7 +42,7 @@ function InterfaceProcessor() {
 				case ts.SyntaxKind.StringKeyword: // 130
 					if (scope == ts.SyntaxKind.PropertySignature) {
 						fieldBuilder.setType(getTypeAsString(node.kind));
-						reflectBuilder.addfield(fieldBuilder.build());
+						reflectBuilder.addField(fieldBuilder.build());
 					}
 					break;
 				case ts.SyntaxKind.PropertySignature: //141

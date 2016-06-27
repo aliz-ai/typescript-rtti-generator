@@ -1,32 +1,25 @@
 function ReflectBuilder() {
-	var _array = [];
-	var _typeName = '';
+	var fields = [];
+	var reflectClassName = '';
 
 	this.setTypeName = function (typeName) {
-		_typeName = typeName + 'Reflect';
+		reflectClassName = typeName + 'Reflect';
 		return this;
 	}
 
-	this.addfield = function (field) {
-		_array.push(field);
+	this.addField = function (field) {
+		fields.push(field);
 		return this;
 	}
 
 	this.build = function () {
-		if (_typeName == '')
-			return '';
+		var result = 'export class ' + reflectClassName + '{\n\t';
 
-		rv = 'export class ' + _typeName + "{\n\t";
+		result += fields.join('\n\t');
 
-		if (_array != null && _array.length > 0) {
-			rv += _array.reduce((previousValue, currentValue) => {
-				return previousValue + "\n\t" + currentValue;
-			})
-		}
+		result += "\n}";
 
-		rv += "\n}";
-
-		return rv;
+		return result;
 	}
 }
 

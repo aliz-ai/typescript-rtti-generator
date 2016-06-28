@@ -8,10 +8,9 @@ function FieldBuilder() {
 		enum: false
 	}
 
-	this.build = function () {
+	function buildType() {
 		var properties = [];
-		properties.push('name: "' + descriptor.name + '"');
-		properties.push('type: "' + descriptor.type + '"');
+		properties.push('name: "' + descriptor.type + '"');
 		if (descriptor.reflect) {
 			properties.push('reflect: ' + descriptor.reflect + 'Reflect');
 		}
@@ -24,6 +23,13 @@ function FieldBuilder() {
 		if (descriptor.enum) {
 			properties.push('enum: ' + descriptor.enum);
 		}
+		return '{' + properties.join(', ') + '}';
+	}
+
+	this.build = function () {
+		var properties = [];
+		properties.push('name: "' + descriptor.name + '"');
+		properties.push('type: ' + buildType());
 		var result = 'public static get ' + descriptor.name + '(): PropertyDescriptor { return {' + properties.join(', ') + '};}';
 		return result;
 	}

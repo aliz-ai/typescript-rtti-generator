@@ -50,6 +50,9 @@ function RttiGenerator() {
 						typeBuilder.setConstructor(name);
 					}
 					break;
+				case ts.SyntaxKind.AnyKeyword:
+					typeBuilder.setName("object");
+					break;
 				case ts.SyntaxKind.BooleanKeyword: // 120
 				case ts.SyntaxKind.NumberKeyword: // 128
 				case ts.SyntaxKind.StringKeyword: // 130

@@ -148,6 +148,14 @@ describe('ast', () => {
 				}`
 			expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 		});
+		it('handles the any type', () => {
+			const inputInterface = 'export interface TestInterface{ testMethod(): any}';
+			const expected =
+				`export class TestInterfaceReflect{
+					public static get testMethod(): MethodDescriptor { return {name: "testMethod", returnType: {name: "object"}, parameters: []};}
+				}`
+			expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
+		});
 		it('maps parameter types', () => {
 			const inputInterface = 'export interface TestInterface{ testMethod(param1: string, param2: number[]): boolean}';
 			const expected =

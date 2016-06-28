@@ -27,21 +27,27 @@ function RttiGenerator() {
 	function processType(node) {
 		var typeBuilder = new TypeBuilder();
 		processTypeSubNode(node);
+		if (node.typeArguments) {
+			node.typeArguments.forEach(typeArgumentNode => {
+				typeBuilder.addTypeArgument(processType(typeArgumentNode));
+			});
+		}
 		return typeBuilder.build();
 		function processTypeSubNode(node) {
 			switch (node.kind) {
-				case ts.SyntaxKind.Identifier: // 69
-					if (node.parent.kind === ts.SyntaxKind.TypeReference) { // 152
-						var name = node.text;
-						typeBuilder.setName('object');
-						if (!declarations[name] || declarations[name].kind == ts.SyntaxKind.InterfaceDeclaration) { // if there was no declaration found, we expect it to actually exist
-							typeBuilder.setReflect(node.text);
-						} else if (declarations[name].kind == ts.SyntaxKind.EnumDeclaration) {
-							// there's no reflect generated for enums, but we import it from the reflected module
-							typeBuilder.setEnum();
+				case ts.SyntaxKind.TypeReference: // 152
+					var name = node.typeName.text;
+					typeBuilder.setName('object');
+					if (!declarations[name] || declarations[name].kind == ts.SyntaxKind.InterfaceDeclaration) { // if there was no declaration found, we expect it to actually exist
+						if (name !== 'Promise') {	// we exclude some built-in types
+							typeBuilder.setReflect(name);
+						} else {
 							typeBuilder.setConstructor(name);
 						}
-					} else {
+					} else if (declarations[name].kind == ts.SyntaxKind.EnumDeclaration) {
+						// there's no reflect generated for enums, but we import it from the reflected module
+						typeBuilder.setEnum();
+						typeBuilder.setConstructor(name);
 					}
 					break;
 				case ts.SyntaxKind.BooleanKeyword: // 120
@@ -51,9 +57,9 @@ function RttiGenerator() {
 					break;
 				case ts.SyntaxKind.ArrayType:  // 157
 					typeBuilder.setArray();
+					processTypeSubNode(node.elementType);
 					break;
 			}
-			ts.forEachChild(node, processTypeSubNode);
 		}
 	}
 
@@ -91,7 +97,7 @@ function RttiGenerator() {
 						reflectBuilder.addField(processProperty(node));
 						break;
 					case ts.SyntaxKind.MethodSignature:
-					  reflectBuilder.addField(processMethod(node));
+						reflectBuilder.addField(processMethod(node));
 						break
 				}
 				ts.forEachChild(node, processNode);
@@ -103,7 +109,7 @@ function RttiGenerator() {
 		var sourceFile = ts.createSourceFile('', inputString, ts.ScriptTarget.ES6, true);
 		preEnumerateTypes(sourceFile)
 
-		rv += 'import {PropertyDescriptor} from "typescript-rtti";\r\n';
+		rv += 'import {PropertyDescriptor, MethodDescriptor} from "typescript-rtti";\r\n';
 
 		// import enums
 		if (moduleName) {

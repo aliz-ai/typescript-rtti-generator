@@ -8,7 +8,7 @@ function squeezeWhitespaces(string) {
 	return string.replace(/\s+/g, ' ').replace(/^\s+/g, '');
 }
 function expectEqualIgnoreWhitespace(actual, expected) {
-	actual = actual.replace('import {PropertyDescriptor} from "typescript-rtti";', '');
+	actual = actual.replace('import {PropertyDescriptor, MethodDescriptor} from "typescript-rtti";', '');
 	expect(squeezeWhitespaces(actual)).toBe(squeezeWhitespaces(expected));
 }
 
@@ -154,6 +154,14 @@ describe('ast', () => {
 				`export class TestInterfaceReflect{
 					public static get testMethod(): MethodDescriptor { return {name: "testMethod", returnType: {name: "boolean"}, parameters: [{name: "param1", type: {name: "string"}},
 						{name: "param2", type: {name: "number", array: true}}]};}
+				}`
+			expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
+		});
+		it('maps a return type argument', () => {
+			const inputInterface = 'export interface TestInterface{ testMethod(): Promise<boolean>}';
+			const expected =
+				`export class TestInterfaceReflect{
+					public static get testMethod(): MethodDescriptor { return {name: "testMethod", returnType: {name: "object", constructor: Promise, typeArguments: [{name: "boolean"}]}, parameters: []};}
 				}`
 			expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 		});

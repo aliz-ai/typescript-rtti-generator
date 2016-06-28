@@ -4,7 +4,8 @@ function TypeBuilder() {
 		reflect: '', // the name of the object, in case of 'object'
 		constructor: '', // a direct reference to the constructor, if it's a class or enum
 		array: false,
-		enum: false
+		enum: false,
+		typeArguments: []
 	}
 
 	this.build = function() {
@@ -21,6 +22,9 @@ function TypeBuilder() {
 		}
 		if (descriptor.enum) {
 			properties.push('enum: ' + descriptor.enum);
+		}
+		if (descriptor.typeArguments && descriptor.typeArguments.length > 0) {
+			properties.push('typeArguments: [' + descriptor.typeArguments.join(', ') + ']');
 		}
 		return '{' + properties.join(', ') + '}';
 	}
@@ -47,6 +51,11 @@ function TypeBuilder() {
 
 	this.setConstructor = function (constructor) {
 		descriptor.constructor = constructor;
+		return this;
+	}
+
+	this.addTypeArgument = function (typeArgument) {
+		descriptor.typeArguments.push(typeArgument);
 		return this;
 	}
 }

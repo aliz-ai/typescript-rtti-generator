@@ -110,15 +110,6 @@ describe('ast', () => {
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
 
-	it('can handle an unsupported service interface', () => {
-		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; equals(param0: any): Promise<boolean>;}';
-		const expected =
-			`export class HelloReflect{
-				public static get listItems(): PropertyDescriptor { return {name: "listItems", type: {name: "object", reflect: ExampleListItemReflect, array: true}};}
-			}`
-		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
-	});
-
 	it('can handle an interface before variable', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export var rootUrl: string;';
 		const expected =
@@ -148,4 +139,23 @@ describe('ast', () => {
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
 
+  describe('with interface methods', () => {
+		it('maps a primitive getter', () => {
+			const inputInterface = 'export interface TestInterface{ testMethod(): boolean}';
+			const expected =
+				`export class TestInterfaceReflect{
+					public static get testMethod(): MethodDescriptor { return {name: "testMethod", returnType: {name: "boolean"}, parameters: []};}
+				}`
+			expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
+		});
+		it('maps parameter types', () => {
+			const inputInterface = 'export interface TestInterface{ testMethod(param1: string, param2: number[]): boolean}';
+			const expected =
+				`export class TestInterfaceReflect{
+					public static get testMethod(): MethodDescriptor { return {name: "testMethod", returnType: {name: "boolean"}, parameters: [{name: "param1", type: {name: "string"}},
+						{name: "param2", type: {name: "number", array: true}}]};}
+				}`
+			expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
+		});
+	});
 });

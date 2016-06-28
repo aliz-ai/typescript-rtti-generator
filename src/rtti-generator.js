@@ -2,6 +2,7 @@ var ts = require('typescript');
 const ReflectBuilder = require('./reflect-builder');
 const FieldBuilder = require('./field-builder');
 const TypeBuilder = require('./type-builder');
+const MethodBuilder = require('./method-builder');
 
 function RttiGenerator() {
 	var rv = '';
@@ -23,14 +24,11 @@ function RttiGenerator() {
 		}
 	}
 
-	function processProperty(node) {
+	function processType(node) {
 		var typeBuilder = new TypeBuilder();
-		var fieldBuilder = new FieldBuilder();
-		processPropertyNode(node);
-		fieldBuilder.setTypeDesc(typeBuilder.build());
-		return fieldBuilder.build();
-
-		function processPropertyNode(node) {
+		processTypeSubNode(node);
+		return typeBuilder.build();
+		function processTypeSubNode(node) {
 			switch (node.kind) {
 				case ts.SyntaxKind.Identifier: // 69
 					if (node.parent.kind === ts.SyntaxKind.TypeReference) { // 152
@@ -44,7 +42,6 @@ function RttiGenerator() {
 							typeBuilder.setConstructor(name);
 						}
 					} else {
-						fieldBuilder.setName(node.text);
 					}
 					break;
 				case ts.SyntaxKind.BooleanKeyword: // 120
@@ -56,10 +53,25 @@ function RttiGenerator() {
 					typeBuilder.setArray();
 					break;
 			}
-			if (node.kind != ts.SyntaxKind.MethodSignature) {
-				ts.forEachChild(node, processPropertyNode);
-			}
+			ts.forEachChild(node, processTypeSubNode);
 		}
+	}
+
+	function processProperty(node) {
+		var fieldBuilder = new FieldBuilder();
+		fieldBuilder.setName(node.name.text);
+		fieldBuilder.setTypeDesc(processType(node.type));
+		return fieldBuilder.build();
+	}
+
+	function processMethod(node) {
+		var methodBuilder = new MethodBuilder();
+		methodBuilder.setName(node.name.text);
+		methodBuilder.setReturnType(processType(node.type));
+		node.parameters.forEach(parameterNode => {
+			methodBuilder.addParameter(parameterNode.name.text, processType(parameterNode.type));
+		});
+		return methodBuilder.build();
 	}
 
 	function InterfaceProcessor() {
@@ -78,10 +90,11 @@ function RttiGenerator() {
 					case ts.SyntaxKind.PropertySignature: //141
 						reflectBuilder.addField(processProperty(node));
 						break;
+					case ts.SyntaxKind.MethodSignature:
+					  reflectBuilder.addField(processMethod(node));
+						break
 				}
-				if (node.kind != ts.SyntaxKind.MethodSignature) {
-					ts.forEachChild(node, processNode);
-				}
+				ts.forEachChild(node, processNode);
 			}
 		}
 	}

@@ -2,6 +2,7 @@ var ts = require('typescript');
 const ReflectBuilder = require('../src//reflect-builder');
 const FieldBuilder = require('../src/field-builder');
 const RttiGenerator = require('../src/rtti-generator');
+const TypeBuilder = require('../src/type-builder');
 
 function squeezeWhitespaces(string) {
 	return string.replace(/\s+/g, ' ').replace(/^\s+/g, '');
@@ -19,12 +20,12 @@ describe("The FieldDefinitionBuilder ", function () {
 
 	it("create field builder with name and type", function () {
 		const expected = 'public static get id(): PropertyDescriptor { return {name: "id", type: {name: "string"}};}';
-		expect(builder.setName('id').setType('string').build()).toEqual(expected);
+		expect(builder.setName('id').setTypeDesc(new TypeBuilder().setName('string').build()).build()).toEqual(expected);
   });
 
 	it("create field builder with name and type and array", function () {
 		const expected = 'public static get id(): PropertyDescriptor { return {name: "id", type: {name: "string", array: true}};}';
-		expect(builder.setName('id').setType('string').setArray().build()).toEqual(expected);
+		expect(builder.setName('id').setTypeDesc(new TypeBuilder().setName('string').setArray().build()).build()).toEqual(expected);
   });
 
 });

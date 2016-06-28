@@ -141,7 +141,7 @@ describe('ast', () => {
 			`import {TestModule} from './test-module';
 			 import Enum = TestModule.Enum;
 			 export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", constructor: Enum};}
+				public static get listItems(){ return {name: "listItems", type: "object", constructor: Enum, enum: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});

@@ -4,9 +4,10 @@ const FieldBuilder = require('../src/field-builder');
 const RttiGenerator = require('../src/rtti-generator');
 
 function squeezeWhitespaces(string) {
-	return string.replace(/\s+/g, ' ');
+	return string.replace(/\s+/g, ' ').replace(/^\s+/g, '');
 }
 function expectEqualIgnoreWhitespace(actual, expected) {
+	actual = actual.replace('import {PropertyDescriptor} from "typescript-rtti";', '');
 	expect(squeezeWhitespaces(actual)).toBe(squeezeWhitespaces(expected));
 }
 
@@ -17,12 +18,12 @@ describe("The FieldDefinitionBuilder ", function () {
 	});
 
 	it("create field builder with name and type", function () {
-		const expected = 'public static get id(){ return {name: "id", type: "string"};}';
+		const expected = 'public static get id(): PropertyDescriptor { return {name: "id", type: "string"};}';
 		expect(builder.setName('id').setType('string').build()).toEqual(expected);
   });
 
 	it("create field builder with name and type and array", function () {
-		const expected = 'public static get id(){ return {name: "id", type: "string", array: true};}';
+		const expected = 'public static get id(): PropertyDescriptor { return {name: "id", type: "string", array: true};}';
 		expect(builder.setName('id').setType('string').setArray().build()).toEqual(expected);
   });
 
@@ -59,7 +60,7 @@ describe('ast', () => {
 	});
 
 	it('can handle the empty input', () => {
-		expect(astObj.process('')).toBe('');
+		expectEqualIgnoreWhitespace(astObj.process(''), '');
 	});
 
 	it('can handle the empty interface', () => {
@@ -78,9 +79,9 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ number : number; string : string; bool : boolean; }';
 		const expected =
 			`export class HelloReflect{
-				public static get number(){ return {name: "number", type: "number"};}
-				public static get string(){ return {name: "string", type: "string"};}
-				public static get bool(){ return {name: "bool", type: "boolean"};}
+				public static get number(): PropertyDescriptor { return {name: "number", type: "number"};}
+				public static get string(): PropertyDescriptor { return {name: "string", type: "string"};}
+				public static get bool(): PropertyDescriptor { return {name: "bool", type: "boolean"};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
@@ -89,9 +90,9 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; numberItems: number[]; bool : boolean[]; }';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
-				public static get numberItems(){ return {name: "numberItems", type: "number", array: true};}
-				public static get bool(){ return {name: "bool", type: "boolean", array: true};}
+				public static get listItems(): PropertyDescriptor { return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
+				public static get numberItems(): PropertyDescriptor { return {name: "numberItems", type: "number", array: true};}
+				public static get bool(): PropertyDescriptor { return {name: "bool", type: "boolean", array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
@@ -100,10 +101,10 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export interface Bello{ listItems: ExampleListItem[];}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
+				public static get listItems(): PropertyDescriptor { return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}
 			export class BelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
+				public static get listItems(): PropertyDescriptor { return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
@@ -112,7 +113,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[]; equals(param0: any): Promise<boolean>;}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
+				public static get listItems(): PropertyDescriptor { return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}`
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
@@ -121,7 +122,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export var rootUrl: string;';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
+				public static get listItems(): PropertyDescriptor { return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
@@ -130,7 +131,7 @@ describe('ast', () => {
 		const inputInterface = 'export interface Hello{ listItems: ExampleListItem[];}export enum Enum{}';
 		const expected =
 			`export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
+				public static get listItems(): PropertyDescriptor { return {name: "listItems", type: "object", reflect: ExampleListItemReflect, array: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});
@@ -141,7 +142,7 @@ describe('ast', () => {
 			`import {TestModule} from './test-module';
 			 import Enum = TestModule.Enum;
 			 export class HelloReflect{
-				public static get listItems(){ return {name: "listItems", type: "object", constructor: Enum, enum: true};}
+				public static get listItems(): PropertyDescriptor { return {name: "listItems", type: "object", constructor: Enum, enum: true};}
 			}`;
 		expectEqualIgnoreWhitespace(astObj.process(inputInterface, 'test-module'), expected);
 	});

@@ -94,6 +94,8 @@ function RttiGenerator() {
 		var sourceFile = ts.createSourceFile('', inputString, ts.ScriptTarget.ES6, true);
 		preEnumerateTypes(sourceFile)
 
+		rv += 'import {PropertyDescriptor} from "typescript-rtti";\r\n';
+
 		// import enums
 		if (moduleName) {
 			rv += 'import {' + moduleName + '} from \'./' + fileName + '\';\r\n';

@@ -24,7 +24,7 @@ function FieldBuilder() {
 		if (descriptor.enum) {
 			properties.push('enum: ' + descriptor.enum);
 		}
-		var result = 'public static get ' + descriptor.name + '(){ return {' + properties.join(', ') + '};}';
+		var result = 'public static get ' + descriptor.name + '(): PropertyDescriptor { return {' + properties.join(', ') + '};}';
 		return result;
 	}
 
